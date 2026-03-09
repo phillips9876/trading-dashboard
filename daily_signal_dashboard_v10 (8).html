@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edge Dashboard v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #05060a;
+  --s1:     #090b10;
+  --s2:     #0d1018;
+  --s3:     #111520;
+  --border: #181d2a;
+  --b2:     #1f2638;
+  --long:   #00e5a0;
+  --short:  #ff3d6b;
+  --neut:   #f0b429;
+  --blue:   #3d9eff;
+  --purple: #9d6fff;
+  --dim:    #404966;
+  --mid:    #6b7494;
+  --text:   #a8b0cc;
+  --bright: #dde3ff;
+  --mono:   'Space Mono', monospace;
+  --display:'Barlow Condensed', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--display);
+  font-weight: 400;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── GRID TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(61,158,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,158,255,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── SCANLINE ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,.15) 2px, rgba(0,0,0,.15) 4px
+  );
+}
+
+.wrap { position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(5,6,10,.97);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+  gap: 16px; flex-wrap: wrap;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-logo {
+  font-family: var(--display);
+  font-weight: 900; font-size: 18px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--bright);
+}
+.hdr-logo span { color: var(--blue); }
+.hdr-meta {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--dim);
+  letter-spacing: .5px; line-height: 1.6;
+}
+.hdr-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,229,160,.06);
+  border: 1px solid rgba(0,229,160,.2);
+  border-radius: 20px; padding: 4px 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--long);
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--long); box-shadow: 0 0 6px var(--long);
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.clock { font-family: var(--mono); font-size: 11px; color: var(--mid); }
+.refresh-btn {
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 6px; padding: 6px 14px;
+  font-family: var(--display); font-weight: 700;
+  font-size: 13px; color: var(--text);
+  cursor: pointer; transition: all .2s; letter-spacing: 1px;
+}
+.refresh-btn:hover { border-color: var(--blue); color: var(--blue); }
+.refresh-btn:disabled { opacity: .4; cursor: default; }
+
+/* ── SYSTEM TABS ── */
+.sys-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+}
+.sys-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 14px 20px;
+  font-family: var(--display); font-weight: 700;
+  font-size: 15px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--dim); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+}
+.sys-tab:hover { color: var(--text); }
+.sys-tab.act-4h { color: var(--blue); border-bottom-color: var(--blue); background: rgba(61,158,255,.04); }
+.sys-tab.act-1h { color: var(--purple); border-bottom-color: var(--purple); background: rgba(157,111,255,.04); }
+.tab-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  font-weight: 700; letter-spacing: 1px;
+}
+.badge-4h { background: rgba(61,158,255,.12); color: var(--blue); border: 1px solid rgba(61,158,255,.2); }
+.badge-1h { background: rgba(157,111,255,.12); color: var(--purple); border: 1px solid rgba(157,111,255,.2); }
+
+/* ── TIMING STRIP ── */
+.timing-strip {
+  background: var(--s1); border-bottom: 1px solid var(--border);
+  padding: 8px 24px; display: flex; align-items: center;
+  gap: 10px; flex-wrap: wrap;
+}
+.strip-label {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--dim); letter-spacing: 1px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.check-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.check-pill {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 4px;
+  border: 1px solid var(--border); background: var(--s2); color: var(--dim);
+}
+.check-pill.next { border-color: rgba(61,158,255,.5); background: rgba(61,158,255,.08); color: var(--blue); }
+.check-pill.next-1h { border-color: rgba(157,111,255,.5); background: rgba(157,111,255,.08); color: var(--purple); }
+.check-pill.active { border-color: rgba(0,229,160,.3); background: rgba(0,229,160,.05); color: var(--long); }
+.check-pill.inactive { opacity: .25; }
+.strip-cd {
+  margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.cd-label { font-family: var(--mono); font-size: 9px; color: var(--dim); }
+.cd-val {
+  font-family: var(--mono); font-size: 15px; font-weight: 700;
+  min-width: 60px; text-align: right;
+}
+.cd-4h { color: var(--blue); }
+.cd-1h { color: var(--purple); }
+.cd-urgent { animation: pulse .8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── MAIN ── */
+.main { padding: 20px 24px; max-width: 1080px; margin: 0 auto; }
+
+/* ── SECTION HEADER ── */
+.section-hdr {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+.section-hdr-line { flex: 1; height: 1px; background: var(--border); }
+.section-tag {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 3px; border: 1px solid; white-space: nowrap;
+}
+.tag-4h { color: var(--blue); border-color: rgba(61,158,255,.25); background: rgba(61,158,255,.05); }
+.tag-1h { color: var(--purple); border-color: rgba(157,111,255,.25); background: rgba(157,111,255,.05); }
+
+/* ── OVERVIEW GRID ── */
+.overview { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 16px; }
+.ov-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+  cursor: pointer; transition: all .15s;
+}
+.ov-card:hover { border-color: var(--b2); transform: translateY(-1px); }
+.ov-card.long  { border-color: rgba(0,229,160,.25); background: rgba(0,229,160,.025); }
+.ov-card.short { border-color: rgba(255,61,107,.25); background: rgba(255,61,107,.025); }
+.ov-sym {
+  font-family: var(--display); font-weight: 900; font-size: 20px;
+  color: var(--bright); letter-spacing: 1px; margin-bottom: 2px;
+}
+.ov-price {
+  font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 10px;
+}
+.ov-dir {
+  font-family: var(--display); font-weight: 800; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
+}
+.ov-score {
+  font-family: var(--mono); font-size: 30px; font-weight: 700; line-height: 1;
+}
+.ov-sub { font-family: var(--mono); font-size: 9px; color: var(--dim); margin-top: 3px; }
+.ov-pips { display: flex; gap: 3px; margin-top: 10px; }
+.ov-pip { width: 9px; height: 9px; border-radius: 2px; }
+
+/* ── ASSET TABS ── */
+.asset-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.asset-tab {
+  padding: 8px 20px; border-radius: 6px; cursor: pointer;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+  letter-spacing: 1px; transition: all .2s;
+  border: 1px solid var(--b2); background: var(--s1); color: var(--dim);
+}
+.asset-tab.act-long  { color: var(--long);  background: rgba(0,229,160,.06);  border-color: rgba(0,229,160,.3);  }
+.asset-tab.act-short { color: var(--short); background: rgba(255,61,107,.06); border-color: rgba(255,61,107,.3); }
+.asset-tab.act-neut  { color: var(--neut);  background: rgba(240,180,41,.06); border-color: rgba(240,180,41,.2); }
+
+/* ── SIGNAL CARD ── */
+.sig-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px 22px;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 20px; align-items: start; margin-bottom: 12px;
+}
+.sig-card.long  { border-color: rgba(0,229,160,.3);  background: rgba(0,229,160,.02);  }
+.sig-card.short { border-color: rgba(255,61,107,.3); background: rgba(255,61,107,.02); }
+.sig-card.neut  { border-color: rgba(240,180,41,.15); }
+.sig-dir-label {
+  font-family: var(--display); font-weight: 900;
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sig-title {
+  font-family: var(--display); font-weight: 900;
+  font-size: 28px; color: var(--bright); letter-spacing: .5px; margin-bottom: 5px;
+}
+.sig-sub { font-size: 13px; color: var(--mid); line-height: 1.6; max-width: 500px; }
+.sig-score-wrap { text-align: right; }
+.sig-score {
+  font-family: var(--mono); font-size: 60px; font-weight: 700;
+  line-height: 1; letter-spacing: -3px;
+}
+.sig-score-sub {
+  font-family: var(--mono); font-size: 9px; color: var(--dim);
+  letter-spacing: 1px; margin-top: 4px;
+}
+.c-long  { color: var(--long);  }
+.c-short { color: var(--short); }
+.c-neut  { color: var(--neut);  }
+.c-blue  { color: var(--blue);  }
+.c-purple{ color: var(--purple);}
+.c-dim   { color: var(--dim);   }
+.c-mid   { color: var(--mid);   }
+.c-bright{ color: var(--bright);}
+
+/* ── MTF BANNER ── */
+.mtf-banner {
+  border-radius: 6px; padding: 11px 15px; margin-bottom: 12px;
+  font-family: var(--display); font-weight: 600; font-size: 14px;
+  display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
+}
+.mtf-info    { background: rgba(61,158,255,.06);  border: 1px solid rgba(61,158,255,.2);  color: var(--blue);  }
+.mtf-ok      { background: rgba(0,229,160,.06);   border: 1px solid rgba(0,229,160,.25);  color: var(--long);  }
+.mtf-blocked { background: rgba(255,61,107,.06);  border: 1px solid rgba(255,61,107,.25); color: var(--short); }
+
+/* ── SIGNAL GRID (6 signals) ── */
+.sig-breakdown {
+  display: grid; grid-template-columns: repeat(6,1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+.sb-item {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 11px 10px; text-align: center;
+}
+.sb-icon { font-size: 16px; margin-bottom: 5px; }
+.sb-name {
+  font-family: var(--mono); font-size: 8px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
+}
+.sb-val  { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+.sb-verd { font-family: var(--display); font-weight: 700; font-size: 10px; }
+
+/* ── STATS ROW ── */
+.stats-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.stat-box {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 11px 14px; flex: 1; min-width: 120px;
+}
+.stat-icon { font-size: 14px; margin-bottom: 5px; }
+.stat-label {
+  font-family: var(--mono); font-size: 8px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+.stat-val { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--bright); }
+.stat-sub { font-family: var(--display); font-size: 11px; color: var(--dim); margin-top: 3px; line-height: 1.4; }
+
+/* ── NO TRADE BOX ── */
+.no-trade {
+  background: rgba(240,180,41,.04); border: 1px solid rgba(240,180,41,.15);
+  border-radius: 7px; padding: 14px 16px; margin-bottom: 12px;
+  display: flex; gap: 12px; align-items: flex-start;
+  font-family: var(--display); font-size: 14px; line-height: 1.6; color: var(--mid);
+}
+
+/* ── TRADE PARAMS ── */
+.trade-params {
+  display: grid; grid-template-columns: repeat(5,1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+.param-box {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 12px 14px;
+}
+.param-val { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--bright); margin-bottom: 4px; }
+.param-label { font-family: var(--mono); font-size: 8px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.param-sub { font-family: var(--display); font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+/* ── EXEC STEPS ── */
+.exec-box {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 7px; overflow: hidden; margin-bottom: 12px;
+}
+.exec-hdr {
+  padding: 9px 15px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 9px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 2px;
+}
+.exec-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 11px 15px; border-bottom: 1px solid var(--border);
+  font-family: var(--display); font-size: 13px; line-height: 1.6;
+}
+.exec-step:last-child { border-bottom: none; }
+.exec-n {
+  width: 22px; height: 22px; border-radius: 4px; flex-shrink: 0;
+  background: var(--s3); border: 1px solid var(--b2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--dim);
+}
+
+/* ── RULES ── */
+.rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.rule-box {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 13px 15px;
+  font-family: var(--display); font-size: 13px; line-height: 1.7;
+}
+.rule-title {
+  font-family: var(--mono); font-size: 8px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 7px;
+}
+
+/* ── AWAKE NOTICE ── */
+.awake-notice {
+  background: rgba(157,111,255,.05); border: 1px solid rgba(157,111,255,.2);
+  border-radius: 7px; padding: 12px 16px; margin-bottom: 14px;
+  display: flex; gap: 10px; align-items: flex-start;
+  font-family: var(--display); font-size: 14px; line-height: 1.6;
+}
+
+/* ── LOADING ── */
+.loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 0; gap: 16px;
+}
+.loading-track { width: 180px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+.loading-bar {
+  height: 100%; background: var(--long);
+  animation: loadbar 1.6s ease infinite;
+}
+@keyframes loadbar { 0%{width:0;opacity:1} 100%{width:100%;opacity:.1} }
+.loading-txt { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+
+/* ── ERROR ── */
+.err-box {
+  background: rgba(255,61,107,.07); border: 1px solid rgba(255,61,107,.3);
+  border-radius: 8px; padding: 20px; text-align: center;
+  color: var(--short); font-family: var(--display); font-size: 15px;
+}
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border); padding: 14px 24px;
+  font-family: var(--mono); font-size: 9px; color: var(--dim);
+  text-align: center; line-height: 2; letter-spacing: .5px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) { .overview{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:700px) {
+  .sig-breakdown{grid-template-columns:repeat(3,1fr);}
+  .trade-params{grid-template-columns:repeat(2,1fr);}
+  .rules-grid{grid-template-columns:1fr;}
+  .sig-card{grid-template-columns:1fr;}
+  .overview{grid-template-columns:repeat(2,1fr);}
+  .main{padding:14px;}
+  .hdr{padding:0 14px;}
+  .timing-strip{padding:8px 14px;}
+}
+
+/* ── POSITION TRACKER ── */
+.pos-tracker { background:var(--s1); border:1px solid var(--border); border-radius:8px; margin-bottom:12px; overflow:hidden; }
+.pos-tracker-hdr { padding:9px 15px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:9px; color:var(--dim); text-transform:uppercase; letter-spacing:2px; display:flex; justify-content:space-between; align-items:center; }
+.pos-tracker-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border); }
+.pos-cell { background:var(--s2); padding:10px 12px; display:flex; flex-direction:column; gap:5px; align-items:center; }
+.pos-cell-name { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--bright); letter-spacing:1px; }
+.pos-cell-btns { display:flex; gap:4px; }
+.pos-btn { padding:4px 10px; border-radius:4px; font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.5px; cursor:pointer; border:1px solid var(--b2); background:var(--s3); color:var(--dim); transition:all .15s; }
+.pos-btn:hover { color:var(--text); border-color:var(--text); }
+.pos-btn.active-long  { background:rgba(0,229,160,.15);  border-color:var(--long);  color:var(--long);  font-weight:700; }
+.pos-btn.active-short { background:rgba(255,61,107,.15); border-color:var(--short); color:var(--short); font-weight:700; }
+/* ── STACK BANNER ── */
+.stack-banner { border-radius:7px; padding:14px 16px; margin-bottom:10px; border:1px solid rgba(240,180,41,.35); background:rgba(240,180,41,.05); }
+.stack-banner-hdr { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--neut); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
+.stack-steps { display:flex; flex-direction:column; }
+.stack-step { display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-bottom:1px solid rgba(240,180,41,.1); font-family:var(--display); font-size:13px; line-height:1.6; color:var(--text); }
+.stack-step:last-child { border-bottom:none; padding-bottom:0; }
+.stack-n { width:20px; height:20px; border-radius:3px; flex-shrink:0; background:rgba(240,180,41,.12); border:1px solid rgba(240,180,41,.28); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9px; font-weight:700; color:var(--neut); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">EDGE<span>.</span>DASH</div>
+    <div class="hdr-meta">
+      v10 · BTC ETH SOL BNB AVAX · LIVE BINANCE<br>
+      <span id="aud-display">AUD/USD loading…</span>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button class="refresh-btn" id="rbtn" onclick="loadAll()">↻ REFRESH</button>
+  </div>
+</header>
+
+<!-- SYSTEM TABS -->
+<div class="sys-tabs">
+  <div class="sys-tab act-4h" id="tab-4h" onclick="switchSys('4h')">
+    4H SYSTEM <span class="tab-badge badge-4h">A$50 · 3×</span>
+  </div>
+  <div class="sys-tab" id="tab-1h" onclick="switchSys('1h')">
+    1H SYSTEM <span class="tab-badge badge-1h">A$50 · 5×</span>
+  </div>
+</div>
+
+<!-- TIMING STRIPS -->
+<div class="timing-strip" id="strip-4h">
+  <div class="strip-label">4H CHECKS (Sydney)</div>
+  <div class="check-pills" id="pills-4h"></div>
+  <div class="strip-cd">
+    <span class="cd-label">NEXT CLOSE IN</span>
+    <span class="cd-val cd-4h" id="cd-4h">--:--</span>
+  </div>
+</div>
+<div class="timing-strip" id="strip-1h" style="display:none">
+  <div class="strip-label">1H CHECKS · 7am–11pm (Sydney)</div>
+  <div class="check-pills" id="pills-1h"></div>
+  <div class="strip-cd">
+    <span class="cd-label">NEXT CLOSE IN</span>
+    <span class="cd-val cd-1h" id="cd-1h">--:--</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="loading" id="loading">
+    <div class="loading-track"><div class="loading-bar"></div></div>
+    <div class="loading-txt">FETCHING LIVE DATA</div>
+  </div>
+  <div id="err" class="err-box" style="display:none"></div>
+  <div id="content" style="display:none">
+
+    <!-- POSITION TRACKER -->
+    <div class="pos-tracker">
+      <div class="pos-tracker-hdr">
+        <span>📍 Active Positions — tap to mark open / close</span>
+        <span style="font-size:9px;color:var(--dim)">Detects stacking opportunities in both directions · resets on refresh</span>
+      </div>
+      <!-- 1H ROW -->
+      <div style="padding:6px 15px 4px;font-family:var(--mono);font-size:8px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;background:var(--s1);border-bottom:1px solid var(--border)">1H Positions</div>
+      <div class="pos-tracker-grid">
+        <div class="pos-cell">
+          <div class="pos-cell-name">BTC</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-1h-BTC-long"  onclick="togglePos('BTC','long','1h')" >▲ L</button>
+            <button class="pos-btn" id="pos-1h-BTC-short" onclick="togglePos('BTC','short','1h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">ETH</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-1h-ETH-long"  onclick="togglePos('ETH','long','1h')" >▲ L</button>
+            <button class="pos-btn" id="pos-1h-ETH-short" onclick="togglePos('ETH','short','1h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">SOL</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-1h-SOL-long"  onclick="togglePos('SOL','long','1h')" >▲ L</button>
+            <button class="pos-btn" id="pos-1h-SOL-short" onclick="togglePos('SOL','short','1h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">BNB</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-1h-BNB-long"  onclick="togglePos('BNB','long','1h')" >▲ L</button>
+            <button class="pos-btn" id="pos-1h-BNB-short" onclick="togglePos('BNB','short','1h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">AVAX</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-1h-AVAX-long"  onclick="togglePos('AVAX','long','1h')" >▲ L</button>
+            <button class="pos-btn" id="pos-1h-AVAX-short" onclick="togglePos('AVAX','short','1h')">▼ S</button>
+          </div>
+        </div>
+      </div>
+      <!-- 4H ROW -->
+      <div style="padding:6px 15px 4px;font-family:var(--mono);font-size:8px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;background:var(--s1);border-bottom:1px solid var(--border);border-top:1px solid var(--border)">4H Positions</div>
+      <div class="pos-tracker-grid">
+        <div class="pos-cell">
+          <div class="pos-cell-name">BTC</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-4h-BTC-long"  onclick="togglePos('BTC','long','4h')" >▲ L</button>
+            <button class="pos-btn" id="pos-4h-BTC-short" onclick="togglePos('BTC','short','4h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">ETH</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-4h-ETH-long"  onclick="togglePos('ETH','long','4h')" >▲ L</button>
+            <button class="pos-btn" id="pos-4h-ETH-short" onclick="togglePos('ETH','short','4h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">SOL</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-4h-SOL-long"  onclick="togglePos('SOL','long','4h')" >▲ L</button>
+            <button class="pos-btn" id="pos-4h-SOL-short" onclick="togglePos('SOL','short','4h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">BNB</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-4h-BNB-long"  onclick="togglePos('BNB','long','4h')" >▲ L</button>
+            <button class="pos-btn" id="pos-4h-BNB-short" onclick="togglePos('BNB','short','4h')">▼ S</button>
+          </div>
+        </div>
+        <div class="pos-cell">
+          <div class="pos-cell-name">AVAX</div>
+          <div class="pos-cell-btns">
+            <button class="pos-btn" id="pos-4h-AVAX-long"  onclick="togglePos('AVAX','long','4h')" >▲ L</button>
+            <button class="pos-btn" id="pos-4h-AVAX-short" onclick="togglePos('AVAX','short','4h')">▼ S</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4H PANEL -->
+    <div id="panel-4h">
+      <div class="section-hdr">
+        <div class="section-hdr-line"></div>
+        <div class="section-tag tag-4h">4H · A$50 RISK · 3× ISO · VOL ≥1.5× · NO MTF RESTRICTION</div>
+        <div class="section-hdr-line"></div>
+      </div>
+      <div class="overview" id="ov-4h"></div>
+      <div class="asset-tabs" id="tabs-4h"></div>
+      <div id="detail-4h"></div>
+    </div>
+
+    <!-- 1H PANEL -->
+    <div id="panel-1h" style="display:none">
+      <div class="section-hdr">
+        <div class="section-hdr-line"></div>
+        <div class="section-tag tag-1h">1H · A$50 RISK · 5× ISO · VOL ≥1.5× · MTF: RSI>55 LONG / RSI&lt;45 SHORT</div>
+        <div class="section-hdr-line"></div>
+      </div>
+      <div class="awake-notice" id="awake"></div>
+      <div class="overview" id="ov-1h"></div>
+      <div class="asset-tabs" id="tabs-1h"></div>
+      <div id="detail-1h"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  4H: check :05 past 7am · 11am · 3pm · 7pm · 11pm · A$50 risk · 3× isolated · vol ≥1.5× · no MTF restriction<br>
+  1H: check :05 past every hour 7am–11pm · A$50 risk · 5× isolated · vol ≥1.5× · 4H RSI >55 long / &lt;45 short<br>
+  Backtest 4yr: 4H 67.1% WR $22,841/yr · 1H 69.3% WR $68,386/yr (at $100 USD risk) · scale linearly<br>
+  For educational purposes only. Not financial advice. Crypto trading involves substantial risk of loss.
+</footer>
+</div><!-- /wrap -->
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONFIG — single source of truth
+// ═══════════════════════════════════════════════════════════════════
+const SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','AVAXUSDT'];
+
+const CFG = {
+  '4h': {
+    risk:      50,          // AUD risk per trade
+    lev:       3,           // leverage (isolated)
+    primary:   '4h',        // primary candle timeframe
+    htf:       '1h',        // higher timeframe for MTF info
+    htfLabel:  '1H',
+    // 4H MTF RULE: informational only — no restriction, full size always
+    // Data shows no WR difference across MTF states on 4H
+    mtfRestrict: false,
+  },
+  '1h': {
+    risk:      50,          // AUD risk per trade
+    lev:       5,           // leverage (isolated)
+    primary:   '1h',        // primary candle timeframe
+    htf:       '4h',        // higher timeframe for MTF gate
+    htfLabel:  '4H',
+    // 1H MTF RULE: directional gate — REQUIRED
+    // LONG:  4H RSI must be > 55 (bullish HTF momentum)
+    // SHORT: 4H RSI must be < 45 (bearish HTF momentum)
+    // Using a single threshold for both is WRONG — it would block valid
+    // shorts in downtrends where RSI is <45 but not >55
+    mtfRestrict: true,
+  },
+};
+
+const VOL_GATE = 1.5;
+// ═══════════════════════════════════════════════════════════════════
+//  ACTIVE 1H POSITION TRACKER
+//  Tracks which assets have an open 1H position and direction.
+//  Used to detect 4H stacking opportunities (data shows +A$9,025/yr).
+//  State: { BTC: 'long'|'short'|null, ETH: ..., ... }
+// ═══════════════════════════════════════════════════════════════════
+const active1H = { BTC: null, ETH: null, SOL: null, BNB: null, AVAX: null };
+const active4H = { BTC: null, ETH: null, SOL: null, BNB: null, AVAX: null };
+
+function togglePos(sym, dir, tf) {
+  const state = tf === '4h' ? active4H : active1H;
+  state[sym] = (state[sym] === dir) ? null : dir;
+
+  // Update button visual state
+  ['long','short'].forEach(d => {
+    const btn = document.getElementById('pos-'+tf+'-'+sym+'-'+d);
+    if (!btn) return;
+    btn.className = 'pos-btn';
+    if (state[sym] === d) btn.classList.add(d === 'long' ? 'active-long' : 'active-short');
+  });
+
+  // Rebuild whichever detail panel is currently showing this asset
+  ['4h','1h'].forEach(panelTf => {
+    if (active['sym'+panelTf] === sym+'USDT') renderDetail(panelTf);
+  });
+}
+    // minimum volume ratio to trade
+const SCORE_THRESH = 6;  // minimum absolute score to trade
+const STOP_ATR  = 1.5;   // stop = 1.5 × ATR from entry
+const TP_ATR    = 2.5;   // TP   = 2.5 × ATR from entry
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════
+let cache   = {};          // { BTCUSDT: { sig4h, sig1h, ticker } }
+let active  = { sys:'4h', sym4h:'BTCUSDT', sym1h:'BTCUSDT' };
+let audRate = 1.58;        // USD→AUD, updated from API
+
+// ═══════════════════════════════════════════════════════════════════
+//  AUD RATE
+// ═══════════════════════════════════════════════════════════════════
+async function fetchAUD() {
+  try {
+    const d = await (await fetch('https://api.exchangerate-api.com/v4/latest/USD')).json();
+    if (d.rates?.AUD) {
+      audRate = d.rates.AUD;
+      document.getElementById('aud-display').textContent =
+        `1 USD = A$${audRate.toFixed(4)}`;
+    }
+  } catch(_) {}
+}
+
+function toAUD(usd) {
+  const a = usd * audRate;
+  return 'A$' + (a >= 1000
+    ? a.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    : a.toFixed(0));
+}
+
+function riskUSD(tf) { return CFG[tf].risk / audRate; }
+
+// ═══════════════════════════════════════════════════════════════════
+//  CLOCK & TIMING STRIP
+// ═══════════════════════════════════════════════════════════════════
+function updateClock() {
+  const now    = new Date();
+  const syTime = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  document.getElementById('clock').textContent = syTime;
+
+  const utcOff = -now.getTimezoneOffset() / 60;
+  const nowH   = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+
+  // 4H closes (UTC hours that 4H candles close on)
+  // Check at :05 past each close
+  const utcCloses4h = [0, 4, 8, 12, 16, 20];
+  const SKIP_UTC = 16; // 3am Sydney — skip
+
+  // Build check times in local hours
+  const checks4h = utcCloses4h.map(u => {
+    const lh = ((u + utcOff) % 24 + 24) % 24;
+    const checkH = ((lh + 1/12) % 24); // :05 past close
+    return { utcH: u, localH: lh, checkH, label: fmtHH(lh) + ':05', skip: u === SKIP_UTC };
+  });
+
+  // Find next non-skipped check
+  let nextCheck4h = null, minDiff4h = Infinity;
+  for (const c of checks4h) {
+    if (c.skip) continue;
+    let d = c.checkH - nowH;
+    if (d <= 0) d += 24;
+    if (d < minDiff4h) { minDiff4h = d; nextCheck4h = c; }
+  }
+
+  document.getElementById('pills-4h').innerHTML = checks4h.map(c => {
+    const isNext = nextCheck4h && c.utcH === nextCheck4h.utcH;
+    return `<div class="check-pill ${c.skip ? 'inactive' : isNext ? 'next' : ''}">${c.label}${c.skip ? ' ✗' : ''}</div>`;
+  }).join('');
+
+  const secs4h = Math.round(minDiff4h * 3600);
+  const h4 = Math.floor(secs4h / 3600), m4 = Math.floor((secs4h % 3600) / 60), s4 = secs4h % 60;
+  const cdEl4 = document.getElementById('cd-4h');
+  cdEl4.textContent = h4 > 0 ? `${h4}h ${pad(m4)}m` : `${pad(m4)}:${pad(s4)}`;
+  cdEl4.className = 'cd-val cd-4h' + (secs4h < 300 ? ' cd-urgent' : '');
+
+  // 1H checks: every hour :05, 7am–11pm
+  const awakeHours = Array.from({ length: 16 }, (_, i) => i + 7); // 7..22
+  let min1h = Infinity;
+  for (const lh of awakeHours) {
+    const checkH = lh + 1/12;
+    let d = checkH - nowH; if (d <= 0) d += 24;
+    if (d < min1h) min1h = d;
+  }
+  const H = now.getHours();
+  document.getElementById('pills-1h').innerHTML = awakeHours.map(lh => {
+    const isNext = (H === lh - 1 && now.getMinutes() >= 55) || (H === lh && now.getMinutes() < 10);
+    const inWindow = H >= 7 && H < 23;
+    const cls = isNext ? 'next-1h' : (inWindow ? 'active' : 'inactive');
+    return `<div class="check-pill ${cls}">${fmtHH(lh)}:05</div>`;
+  }).join('');
+
+  const secs1h = Math.round(min1h * 3600);
+  const h1 = Math.floor(secs1h / 3600), m1 = Math.floor((secs1h % 3600) / 60), s1 = secs1h % 60;
+  const cdEl1 = document.getElementById('cd-1h');
+  cdEl1.textContent = h1 > 0 ? `${h1}h ${pad(m1)}m` : `${pad(m1)}:${pad(s1)}`;
+  cdEl1.className = 'cd-val cd-1h' + (secs1h < 300 ? ' cd-urgent' : '');
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtHH(h) { return pad(Math.floor(((h % 24) + 24) % 24)); }
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// ═══════════════════════════════════════════════════════════════════
+//  DATA FETCH
+// ═══════════════════════════════════════════════════════════════════
+async function fetchKlines(sym, iv, limit = 150) {
+  const r = await fetch(
+    `https://api.binance.com/api/v3/klines?symbol=${sym}&interval=${iv}&limit=${limit}`
+  );
+  const d = await r.json();
+  // ALWAYS drop the last (currently-forming) candle
+  // Binance always includes the open-but-incomplete candle as the last entry
+  // We want closed candles only so signals are computed on complete data
+  return d.slice(0, -1).map(c => ({
+    t: c[0], o: +c[1], h: +c[2], l: +c[3], c: +c[4], v: +c[5]
+  }));
+}
+
+async function fetchTicker(sym) {
+  const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`);
+  return r.json();
+}
+
+async function fetchFunding(sym) {
+  try {
+    const r = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${sym}`);
+    return r.json();
+  } catch(_) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INDICATORS
+// ═══════════════════════════════════════════════════════════════════
+function calcEMA(arr, p) {
+  const k = 2 / (p + 1);
+  let v = arr.slice(0, p).reduce((a, b) => a + b, 0) / p;
+  const out = Array(p - 1).fill(null);
+  out.push(v);
+  for (let i = p; i < arr.length; i++) { v = arr[i] * k + v * (1 - k); out.push(v); }
+  return out;
+}
+
+function calcRSI(arr, p = 14) {
+  const g = [], l = [];
+  for (let i = 1; i < arr.length; i++) {
+    const d = arr[i] - arr[i-1];
+    g.push(d > 0 ? d : 0);
+    l.push(d < 0 ? -d : 0);
+  }
+  let ag = g.slice(0, p).reduce((a, b) => a + b) / p;
+  let al = l.slice(0, p).reduce((a, b) => a + b) / p;
+  const out = Array(p).fill(null);
+  out.push(al === 0 ? 100 : 100 - 100 / (1 + ag / al));
+  for (let i = p; i < g.length; i++) {
+    ag = (ag * (p-1) + g[i]) / p;
+    al = (al * (p-1) + l[i]) / p;
+    out.push(al === 0 ? 100 : 100 - 100 / (1 + ag / al));
+  }
+  return out;
+}
+
+function calcATR(candles, p = 14) {
+  const tr = candles.map((c, i) => i === 0
+    ? c.h - c.l
+    : Math.max(c.h - c.l, Math.abs(c.h - candles[i-1].c), Math.abs(c.l - candles[i-1].c))
+  );
+  let avg = tr.slice(0, p).reduce((a, b) => a + b) / p;
+  const out = Array(p).fill(null);
+  out.push(avg);
+  for (let i = p; i < tr.length; i++) { avg = (avg * (p-1) + tr[i]) / p; out.push(avg); }
+  return out;
+}
+
+function calcBBPos(arr, p = 20, m = 2) {
+  return arr.map((_, i) => {
+    if (i < p - 1) return null;
+    const sl = arr.slice(i - p + 1, i + 1);
+    const mean = sl.reduce((a, b) => a + b) / p;
+    const std = Math.sqrt(sl.reduce((s, v) => s + (v - mean) ** 2, 0) / p);
+    return std === 0 ? 0.5 : (arr[i] - (mean - m * std)) / (m * std * 2);
+  });
+}
+
+function calcATRPctile(arr, lb = 50) {
+  return arr.map((v, i) => {
+    if (v === null || i < lb) return null;
+    const w = arr.slice(i - lb, i).filter(x => x !== null);
+    return w.filter(x => x <= v).length / w.length;
+  });
+}
+
+function calcVolRatio(candles, p = 20) {
+  const vs = candles.map(c => c.v);
+  return vs.map((_, i) => {
+    if (i < p) return null;
+    const avg = vs.slice(i - p, i).reduce((a, b) => a + b) / p;
+    return avg === 0 ? 1 : vs[i] / avg;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SIGNAL ENGINE
+//  Matches master_backtest.py exactly
+// ═══════════════════════════════════════════════════════════════════
+function computeSignal(cPrimary, cHTF, c1d, ticker, funding, tf) {
+  const cfg  = CFG[tf];
+  const cl   = cPrimary.map(c => c.c);
+  const cl1d = c1d.map(c => c.c);
+  const n    = cl.length - 1;
+  const price = cl[n];
+
+  // S1 — Trend: EMA 21/55/100 stack
+  const e21 = calcEMA(cl, 21), e55 = calcEMA(cl, 55), e100 = calcEMA(cl, 100);
+  const [E21, E55, E100] = [e21[n], e55[n], e100[n]];
+  let trendSc = 0, trendV = 'Flat';
+  if (price > E21 && E21 > E55 && E55 > E100) { trendSc =  2; trendV = 'Strong bull'; }
+  else if (price > E21 && E21 > E55)           { trendSc =  1; trendV = 'Mild bull';   }
+  else if (price < E21 && E21 < E55 && E55 < E100) { trendSc = -2; trendV = 'Strong bear'; }
+  else if (price < E21 && E21 < E55)           { trendSc = -1; trendV = 'Mild bear';   }
+
+  // S2 — RSI Momentum (14-period)
+  const rsiArr = calcRSI(cl, 14);
+  const rv = rsiArr[rsiArr.length - 1] ?? 50;
+  let momSc = 0, momV = 'Neutral';
+  if (rv > 65)              { momSc =  2; momV = 'Overbought'; }
+  else if (rv > 55)         { momSc =  1; momV = 'Bullish';    }
+  else if (rv < 35)         { momSc = -2; momV = 'Oversold';   }
+  else if (rv < 45)         { momSc = -1; momV = 'Bearish';    }
+
+  // S3 — Vol/BB squeeze
+  const atrArr = calcATR(cPrimary, 14);
+  const aLast  = atrArr[atrArr.length - 1] ?? 0;
+  const aPctArr = calcATRPctile(atrArr, 50);
+  const apLast = aPctArr[aPctArr.length - 1] ?? 0.5;
+  const bbArr  = calcBBPos(cl, 20, 2);
+  const bpLast = bbArr[bbArr.length - 1] ?? 0.5;
+  let volBBSc = 0, volBBV = `BB ${(bpLast * 100).toFixed(0)}%`;
+  if (bpLast > 0.85 && apLast > 0.6) { volBBSc = -1; volBBV = 'Upper BB+HiVol'; }
+  else if (bpLast < 0.15 && apLast > 0.6) { volBBSc = 1; volBBV = 'Lower BB+HiVol'; }
+  else if (apLast < 0.3) volBBV = 'Vol compression';
+
+  // S4 — Funding rate
+  let fundSc = 0, fundV = 'N/A';
+  if (funding?.lastFundingRate) {
+    const fr = parseFloat(funding.lastFundingRate) * 100;
+    fundV = `${fr > 0 ? '+' : ''}${fr.toFixed(4)}%`;
+    if (fr > 0.06)        { fundSc = -1; fundV = 'Extreme longs'; }
+    else if (fr > 0.02)   { fundSc =  1; fundV = `+${(fr*3*365).toFixed(0)}% ann`; }
+    else if (fr < -0.02)  { fundSc =  1; fundV = 'Shorts paying'; }
+    else                    fundV = 'Neutral';
+  }
+
+  // S5 — Daily structure (EMA 21/55 on daily)
+  const e21d = calcEMA(cl1d, 21), e55d = calcEMA(cl1d, 55);
+  const E21d = e21d[e21d.length - 1], E55d = e55d[e55d.length - 1];
+  const PRd  = cl1d[cl1d.length - 1];
+  let structSc = 0, structV = 'Flat daily';
+  if (PRd > E21d && E21d > E55d)      { structSc =  2; structV = 'Bullish daily';  }
+  else if (PRd > E21d)                 { structSc =  1; structV = 'Above D-EMA21'; }
+  else if (PRd < E21d && E21d < E55d) { structSc = -2; structV = 'Bearish daily';  }
+  else if (PRd < E21d)                 { structSc = -1; structV = 'Below D-EMA21'; }
+
+  // S6 — Volume confirmation
+  // +1 when vol > 1.5× AND last candle up (bullish momentum confirmed by volume)
+  // -1 when vol > 1.5× AND last candle down (bearish momentum confirmed by volume)
+  // This is SEPARATE from the hard vol gate below — S6 contributes to score,
+  // the gate determines whether the signal fires regardless of score
+  const vrArr = calcVolRatio(cPrimary, 20);
+  const vrLast = vrArr[vrArr.length - 1] ?? 1;
+  const lastRet = cl[n] - cl[n - 1];
+  let vcSc = 0, vcV = `${vrLast.toFixed(2)}× avg`;
+  if (vrLast > 1.5 && lastRet > 0) { vcSc =  1; vcV = `${vrLast.toFixed(2)}× ↑`; }
+  else if (vrLast > 1.5 && lastRet < 0) { vcSc = -1; vcV = `${vrLast.toFixed(2)}× ↓`; }
+  else if (vrLast < 0.6) vcV = `${vrLast.toFixed(2)}× (low)`;
+
+  const total = trendSc + momSc + volBBSc + fundSc + structSc + vcSc;
+
+  // ── HTF RSI for MTF filter ──────────────────────────────────────
+  const htfRSI = calcRSI(cHTF.map(c => c.c), 14);
+  const htfRSILast = htfRSI[htfRSI.length - 1] ?? 50;
+
+  // ── DIRECTION LOGIC ─────────────────────────────────────────────
+  // Step 1: Hard vol gate — if vol < 1.5×, no trade regardless of score
+  // Step 2: Score threshold — must reach ±6
+  // Step 3: MTF gate (1H system only, directionally correct)
+  //   LONG:  4H RSI must be > 55 (confirms bullish HTF momentum)
+  //   SHORT: 4H RSI must be < 45 (confirms bearish HTF momentum)
+  //   NOTE: 4H system has NO MTF restriction — full size always
+  let dir = 'neutral';
+  if (vrLast >= VOL_GATE && Math.abs(total) >= SCORE_THRESH) {
+    if (tf === '4h') {
+      // 4H: no MTF restriction — fire on score alone
+      dir = total >= SCORE_THRESH ? 'long' : 'short';
+    } else {
+      // 1H: directional MTF gate
+      if (total >= SCORE_THRESH && htfRSILast > 55)  dir = 'long';
+      if (total <= -SCORE_THRESH && htfRSILast < 45) dir = 'short';
+      // If score ≥6 but MTF not aligned → stays neutral
+    }
+  }
+
+  // ── STOP / TP / SIZE ────────────────────────────────────────────
+  const stopDist = aLast * STOP_ATR;
+  const tpDist   = aLast * TP_ATR;
+  const rUSD     = riskUSD(tf);
+  const posSize  = stopDist > 0 ? rUSD / stopDist : 0;
+
+  return {
+    tf, price, total, dir, vrLast, htfRSILast,
+    atrLast: aLast, atrPct: aLast / price * 100, atrPctile: apLast,
+    stopDist, tpDist, posSize,
+    ticker,
+    signals: [
+      { name:'Trend',    icon:'📈', score:trendSc,  val:`${((E21/E55-1)*100).toFixed(2)}%`,     verdict:trendV  },
+      { name:'Momentum', icon:'⚡', score:momSc,    val:rv.toFixed(1),                           verdict:momV    },
+      { name:'Vol/BB',   icon:'🗜️', score:volBBSc,  val:`${(aLast/price*100).toFixed(2)}%`,     verdict:volBBV  },
+      { name:'Funding',  icon:'💸', score:fundSc,   val:fundV,                                   verdict:fundSc === 0 ? 'Neutral' : fundV },
+      { name:'D.Struct', icon:'🏗️', score:structSc, val:`${((PRd/E21d-1)*100).toFixed(2)}%`,    verdict:structV },
+      { name:'Volume',   icon:'📊', score:vcSc,     val:vcV,                                     verdict:vcSc > 0 ? 'Bull vol' : vcSc < 0 ? 'Bear vol' : 'Unconfirmed' },
+    ],
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  COLOUR HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function scoreColor(s) {
+  if (s >=  2) return 'var(--long)';
+  if (s ===  1) return '#6affbb';
+  if (s <= -2) return 'var(--short)';
+  if (s === -1) return '#ff8fa0';
+  return 'var(--dim)';
+}
+function dirColor(d) {
+  return d === 'long' ? 'var(--long)' : d === 'short' ? 'var(--short)' : 'var(--neut)';
+}
+function dirClass(d) {
+  return d === 'long' ? 'long' : d === 'short' ? 'short' : 'neut';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BUILD SIGNAL DETAIL HTML
+// ═══════════════════════════════════════════════════════════════════
+function buildDetail(sym, sig) {
+  const { tf, dir, total, vrLast, htfRSILast, atrLast, atrPct, atrPctile,
+          stopDist, tpDist, posSize, signals } = sig;
+  const cfg   = CFG[tf];
+  const col   = dirColor(dir);
+  const cls   = dirClass(dir);
+  const name  = sym.replace('USDT','');
+  const rUSD  = riskUSD(tf);
+  const abs   = Math.abs(total);
+
+  // ── Signal card ──
+  let dirLabel, titleText, subText;
+  if (dir !== 'neutral') {
+    dirLabel  = dir === 'long' ? '▲ LONG SIGNAL' : '▼ SHORT SIGNAL';
+    titleText = dir === 'long' ? `▲ BUY ${name}` : `▼ SELL ${name}`;
+    const conv = abs >= 9 ? 'Maximum conviction' : abs >= 8 ? 'High conviction' : abs >= 7 ? 'Strong signal' : 'Valid signal';
+    subText   = `Score ${total}/±9 · ${conv} · Vol: ${vrLast.toFixed(2)}× · ${cfg.htfLabel} RSI: ${htfRSILast.toFixed(0)}`;
+  } else {
+    dirLabel  = '── NO TRADE';
+    titleText = `── STAND ASIDE — ${name}`;
+    // Explain exactly why no trade
+    const volOk   = vrLast >= VOL_GATE;
+    const scoreOk = abs >= SCORE_THRESH;
+    if (!scoreOk) {
+      subText = `Score ${total} — below ±${SCORE_THRESH} threshold. Need ${total >= 0 ? SCORE_THRESH - total : -SCORE_THRESH - total} more point${Math.abs(SCORE_THRESH - abs) !== 1 ? 's' : ''} to fire.`;
+    } else if (!volOk) {
+      subText = `Score ${total} — blocked by volume gate. Vol ${vrLast.toFixed(2)}× is below ${VOL_GATE}× required. Wait for volume.`;
+    } else if (tf === '1h') {
+      // Score ok, vol ok, must be MTF
+      if (total >= SCORE_THRESH) {
+        subText = `Score ${total} — blocked by MTF gate. 4H RSI ${htfRSILast.toFixed(0)} needs to be >55 for long. Currently ${htfRSILast < 45 ? 'bearish' : 'neutral'}.`;
+      } else {
+        subText = `Score ${total} — blocked by MTF gate. 4H RSI ${htfRSILast.toFixed(0)} needs to be <45 for short. Currently ${htfRSILast > 55 ? 'bullish' : 'neutral'}.`;
+      }
+    } else {
+      subText = `Score ${total} — no signal.`;
+    }
+  }
+
+  const sigCard = `
+    <div class="sig-card ${cls}">
+      <div>
+        <div class="sig-dir-label" style="color:${col}">${dirLabel}</div>
+        <div class="sig-title">${titleText}</div>
+        <div class="sig-sub">${subText}</div>
+      </div>
+      <div class="sig-score-wrap">
+        <div class="sig-score" style="color:${col}">${total > 0 ? '+' : ''}${total}</div>
+        <div class="sig-score-sub">OUT OF ±9</div>
+      </div>
+    </div>`;
+
+  // ── MTF banner ──
+  // 4H: informational only — neutral blue banner, no restriction implied
+  // 1H: directional gate — green if aligned, red if blocked
+  let mtfBanner = '';
+  if (dir !== 'neutral' || abs >= SCORE_THRESH) {
+    if (tf === '4h') {
+      // 4H: always informational, never restrictive
+      const htfDesc = htfRSILast > 55 ? 'Bullish' : htfRSILast < 45 ? 'Bearish' : 'Neutral';
+      mtfBanner = `
+        <div class="mtf-banner mtf-info">
+          ℹ️ <div>1H MTF RSI: ${htfRSILast.toFixed(0)} (${htfDesc}) — informational only.
+          4H system trades <strong>full size in all MTF conditions</strong>.
+          Backtest shows no WR difference across MTF states on 4H. No restriction applied.</div>
+        </div>`;
+    } else {
+      // 1H: directional gate — show status clearly
+      if (dir !== 'neutral') {
+        // Trade fired — MTF was satisfied
+        const mtfDesc = dir === 'long'
+          ? `4H RSI ${htfRSILast.toFixed(0)} >55 — bullish HTF confirmed ✅`
+          : `4H RSI ${htfRSILast.toFixed(0)} <45 — bearish HTF confirmed ✅`;
+        mtfBanner = `
+          <div class="mtf-banner mtf-ok">
+            ✅ <div>MTF Gate: ${mtfDesc}. Required for 1H trades — condition met.</div>
+          </div>`;
+      } else if (abs >= SCORE_THRESH && vrLast >= VOL_GATE) {
+        // Score ok, vol ok, but MTF blocked
+        const needed = total >= SCORE_THRESH
+          ? `RSI needs >55 for long (currently ${htfRSILast.toFixed(0)})`
+          : `RSI needs <45 for short (currently ${htfRSILast.toFixed(0)})`;
+        mtfBanner = `
+          <div class="mtf-banner mtf-blocked">
+            ⛔ <div>MTF Gate BLOCKED: 4H ${needed}. 1H does not fire until HTF aligns.</div>
+          </div>`;
+      }
+    }
+  }
+
+  // ── Stats row ──
+  const statsRow = `
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-icon">📊</div>
+        <div class="stat-label">Volume Ratio</div>
+        <div class="stat-val" style="color:${vrLast >= VOL_GATE ? 'var(--long)' : 'var(--short)'}">
+          ${vrLast.toFixed(2)}×
+        </div>
+        <div class="stat-sub">${vrLast >= VOL_GATE ? '✅ Above 1.5× gate' : '❌ Below 1.5× — no trade'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-label">${cfg.htfLabel} RSI (MTF)</div>
+        <div class="stat-val" style="color:${htfRSILast > 55 ? 'var(--long)' : htfRSILast < 45 ? 'var(--short)' : 'var(--neut)'}">
+          ${htfRSILast.toFixed(0)}
+        </div>
+        <div class="stat-sub">${tf === '4h' ? 'Informational — no restriction' :
+          htfRSILast > 55 ? 'Bullish — long gate ✅' :
+          htfRSILast < 45 ? 'Bearish — short gate ✅' : 'Neutral — neither gate open'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon">📐</div>
+        <div class="stat-label">ATR</div>
+        <div class="stat-val">${atrPct.toFixed(2)}%</div>
+        <div class="stat-sub">${(atrPctile * 100).toFixed(0)}th pctile · ${atrPctile > 0.7 ? 'High vol' : atrPctile < 0.3 ? 'Compression' : 'Normal'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon">💹</div>
+        <div class="stat-label">24h Change</div>
+        <div class="stat-val" style="color:${parseFloat(sig.ticker?.priceChangePercent ?? 0) >= 0 ? 'var(--long)' : 'var(--short)'}">
+          ${parseFloat(sig.ticker?.priceChangePercent ?? 0) >= 0 ? '+' : ''}${parseFloat(sig.ticker?.priceChangePercent ?? 0).toFixed(2)}%
+        </div>
+        <div class="stat-sub">$${sig.price.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD</div>
+      </div>
+    </div>`;
+
+  // ── Signal breakdown ──
+  const breakdown = `
+    <div class="sig-breakdown">
+      ${signals.map(s => `
+        <div class="sb-item">
+          <div class="sb-icon">${s.icon}</div>
+          <div class="sb-name">${s.name}</div>
+          <div class="sb-val" style="color:${scoreColor(s.score)}">${s.val}</div>
+          <div class="sb-verd" style="color:${scoreColor(s.score)}">${s.score > 0 ? '▲' : s.score < 0 ? '▼' : '–'} ${s.verdict}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // ── No trade box ──
+  const noTradeBox = dir === 'neutral' ? `
+    <div class="no-trade">
+      <span style="font-size:18px">⏸</span>
+      <div><strong style="color:var(--bright)">No trade.</strong> ${subText} The days you don't trade are protecting your capital.</div>
+    </div>` : '';
+
+  // ── Trade params (only when signal fires) ──
+  let tradeParams = '', execSteps = '';
+  if (dir !== 'neutral') {
+    const ep      = sig.price;
+    const stopPx  = dir === 'long' ? ep - stopDist : ep + stopDist;
+    const tpPx    = dir === 'long' ? ep + tpDist   : ep - tpDist;
+    const margin  = posSize * ep / cfg.lev;
+    const fillId  = `fill-${tf}-${sym}`;
+    const paramsId= `params-${tf}-${sym}`;
+    const execId  = `exec-${tf}-${sym}`;
+
+    tradeParams = `
+      <div style="background:var(--s2);border:1px solid var(--blue);border-radius:7px;padding:13px 16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;flex-shrink:0;">
+            ✏️ Actual Fill Price (USD)
+          </div>
+          <input
+            id="${fillId}"
+            type="number"
+            placeholder="${ep.toFixed(0)}"
+            step="1"
+            style="background:var(--s1);border:1px solid var(--blue);border-radius:5px;
+                   padding:7px 12px;font-family:var(--mono);font-size:16px;font-weight:700;
+                   color:var(--blue);outline:none;width:160px;"
+            oninput="recalcFill('${fillId}','${paramsId}','${execId}',${ep},${stopDist},${tpDist},${rUSD},${cfg.lev},'${dir}','${name}',${cfg.risk},${vrLast},${htfRSILast},'${tf}')"
+          >
+          <div style="font-family:var(--disp);font-size:12px;color:var(--dim);">
+            Signal price: <strong style="color:var(--text)">$${ep.toLocaleString(undefined,{maximumFractionDigits:2})}</strong>
+            &nbsp;·&nbsp; Type actual fill to recalculate all levels
+            &nbsp;·&nbsp; Skip if moved >${stopDist.toFixed(0)} from signal (1× ATR)
+          </div>
+        </div>
+      </div>
+      <div id="${paramsId}">
+        <div class="trade-params">
+          <div class="param-box">
+            <div class="param-val" style="color:${col}">${posSize.toFixed(4)}</div>
+            <div class="param-label">Position (${name})</div>
+            <div class="param-sub">${cfg.risk} AUD ÷ $${stopDist.toFixed(2)} ATR stop</div>
+          </div>
+          <div class="param-box">
+            <div class="param-val" style="color:var(--short)">$${stopPx.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+            <div class="param-label">Stop Loss</div>
+            <div class="param-sub">${(stopDist/ep*100).toFixed(2)}% · 1.5× ATR · stop-market</div>
+          </div>
+          <div class="param-box">
+            <div class="param-val" style="color:var(--long)">$${tpPx.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+            <div class="param-label">Take Profit</div>
+            <div class="param-sub">${(tpDist/ep*100).toFixed(2)}% · 1.67:1 R:R · TP-market</div>
+          </div>
+          <div class="param-box">
+            <div class="param-val" style="color:var(--blue)">${cfg.lev}×</div>
+            <div class="param-label">Leverage</div>
+            <div class="param-sub">Isolated only</div>
+          </div>
+          <div class="param-box">
+            <div class="param-val">${toAUD(margin)}</div>
+            <div class="param-label">Margin Required</div>
+            <div class="param-sub">At ${cfg.lev}× isolated</div>
+          </div>
+        </div>
+      </div>`;
+
+    execSteps = `
+      <div class="exec-box" id="${execId}">
+        <div class="exec-hdr">EXECUTION CHECKLIST &nbsp;·&nbsp; <span style="color:var(--blue);font-weight:400">enter fill price above to update</span></div>
+        <div class="exec-step">
+          <div class="exec-n">01</div>
+          <div>Set leverage to <strong>${cfg.lev}×</strong> on ${name}/USDT perpetual — <strong>isolated margin only</strong>. Never cross margin.</div>
+        </div>
+        <div class="exec-step">
+          <div class="exec-n">02</div>
+          <div>Open <strong style="color:${col}">${dir.toUpperCase()}</strong> market order.
+          Size: <strong>${posSize.toFixed(4)} ${name}</strong>.
+          Risk: A$${cfg.risk} · Margin: <strong>${toAUD(margin)}</strong>.</div>
+        </div>
+        <div class="exec-step">
+          <div class="exec-n">03</div>
+          <div>Set <strong>Stop Loss Price: $${stopPx.toLocaleString(undefined,{maximumFractionDigits:2})}</strong>
+          — ${(stopDist/ep*100).toFixed(2)}% from entry · Stop-market order · Place immediately.</div>
+        </div>
+        <div class="exec-step">
+          <div class="exec-n">04</div>
+          <div>Set <strong>Take Profit Price: $${tpPx.toLocaleString(undefined,{maximumFractionDigits:2})}</strong>
+          — ${(tpDist/ep*100).toFixed(2)}% from entry · 1.67:1 R:R · TP-market · Do not move it.</div>
+        </div>
+        <div class="exec-step">
+          <div class="exec-n">05</div>
+          <div><strong>Vol confirmed:</strong> ${vrLast.toFixed(2)}× ✅ — above ${VOL_GATE}× gate. Signal validated by volume.</div>
+        </div>
+        <div class="exec-step">
+          <div class="exec-n">06</div>
+          <div>${tf === '4h'
+            ? '<strong>MTF (4H system):</strong> ' + cfg.htfLabel + ' RSI ' + htfRSILast.toFixed(0) + ' — informational. Full size in all MTF conditions (data-backed).'
+            : '<strong>MTF gate (1H system):</strong> 4H RSI ' + htfRSILast.toFixed(0) + ' — ' + (dir === 'long' ? 'Bullish >55' : 'Bearish <45') + ' ✅ Required condition met.'
+          }</div>
+        </div>
+      </div>`;
+  }
+
+  // ── Rules ──
+  const rules = `
+    <div class="rules-grid">
+      <div class="rule-box">
+        <div class="rule-title">📊 Volume — Hard Gate</div>
+        Signal only fires at ≥${VOL_GATE}× volume. Backtest: 67–70% WR above threshold vs 41% below.
+        93%+ of all edge lives in high-volume trades. Non-negotiable.
+      </div>
+      <div class="rule-box">
+        <div class="rule-title">⏱️ MTF Rules</div>
+        <strong>4H:</strong> No restriction — full size in all conditions. Data shows no WR difference.<br>
+        <strong>1H:</strong> 4H RSI >55 for longs · 4H RSI &lt;45 for shorts. Asymmetric by design.
+      </div>
+      <div class="rule-box">
+        <div class="rule-title">🔒 One Position Per Asset</div>
+        Never hold two positions on the same asset. One trade at a time per symbol.
+        Close existing position before reversing direction.
+      </div>
+      <div class="rule-box">
+        <div class="rule-title">⚖️ 1H Is Your Discretion</div>
+        1H signals are shown for reference. You decide whether to act.
+        The 4H system is your primary validated edge. 1H is supplementary.
+      </div>
+    </div>`;
+
+
+  // ── STACKING DETECTION ──────────────────────────────────────────
+  // If this is a 4H signal AND there is an active 1H position on the
+  // same asset in the same direction → show stacking instructions.
+  // Backtest result: +A$9,025/yr · WR 62.9% (same as free 4H signals)
+  // DD increase: only A$11 over 4 years.
+  // STACKING DETECTION — +A$9,025/yr backtest edge
+  // Works both ways: 4H firing when 1H active, OR 1H firing when 4H active
+  let stackBanner = '';
+  if (dir !== 'neutral') {
+    // Check the OTHER timeframe's active position
+    const otherState = tf === '4h' ? active1H : active4H;
+    const otherTf    = tf === '4h' ? '1H' : '4H';
+    const pos_other  = otherState[name];
+    const sameDir = (dir === 'long'  && pos_other === 'long') ||
+                    (dir === 'short' && pos_other === 'short');
+    const oppDir  = (dir === 'long'  && pos_other === 'short') ||
+                    (dir === 'short' && pos_other === 'long');
+
+    if (sameDir) {
+      const ep4h    = sig.price;
+      const stop4h  = dir === 'long' ? ep4h - stopDist : ep4h + stopDist;
+      const tp4h    = dir === 'long' ? ep4h + tpDist   : ep4h - tpDist;
+      const size4h  = rUSD / Math.max(stopDist, ep4h * 0.001);
+      const marg4h  = toAUD(size4h * ep4h / 5); // 5x = existing 1H position leverage, cannot change on open position
+      const dirUp   = dir.toUpperCase();
+      const posUp   = pos_other.toUpperCase();
+      const stopFmt = '$' + stop4h.toLocaleString(undefined, {maximumFractionDigits:2});
+      const tpFmt   = '$' + tp4h.toLocaleString(undefined, {maximumFractionDigits:2});
+      const stopPct = (stopDist / ep4h * 100).toFixed(2) + '%';
+      const tpPct   = (tpDist   / ep4h * 100).toFixed(2) + '%';
+      const sz      = size4h.toFixed(4);
+      const vr      = vrLast.toFixed(2);
+
+      stackBanner =
+        '<div class="stack-banner">' +
+        '<div class="stack-banner-hdr">STACK OPPORTUNITY &mdash; 4H CONFIRMING ACTIVE 1H ' + posUp + '&nbsp;&middot;&nbsp; +A$9,025/yr &middot; WR 62.9% &middot; DD +A$11 over 4yr</div>' +
+        '<div style="font-family:var(--mono);font-size:10px;color:rgba(240,180,41,.65);margin-bottom:8px;line-height:1.9;">' +
+          'Your 1H ' + name + ' ' + posUp + ' is open. The 4H just confirmed the same direction. ' +
+          'Backtest says take it &mdash; A$50 additional risk on top of your 1H. ' +
+          'Hyperliquid merges into one position; manage via two separate TP/SL order pairs.' +
+        '</div>' +
+        '<div style="background:rgba(0,0,0,.25);border:1px solid rgba(240,180,41,.2);border-radius:5px;' +
+             'padding:9px 12px;margin-bottom:12px;font-family:var(--mono);font-size:10px;line-height:1.9;">' +
+          '<span style="color:var(--neut);font-weight:700;">&#9888; IGNORE THE 3&times; FIGURES ABOVE.</span> ' +
+          'This add-on runs at <strong style="color:var(--bright)">5&times; isolated</strong> ' +
+          '(Hyperliquid locks leverage to your existing position). ' +
+          'Margin required at 5&times;: <strong style="color:var(--bright)">' + marg4h + '</strong>. ' +
+          'P&amp;L and risk are unaffected &mdash; leverage only changes margin held.' +
+        '</div>' +
+        '<div class="stack-steps">' +
+
+        '<div class="stack-step"><div class="stack-n">01</div>' +
+        '<div>Go to <strong>Trade &rarr; ' + name + '/USDC</strong>. ' +
+        'Your 1H position is open at <strong>5&times; isolated</strong> &mdash; ' +
+        'the add-on will also be at <strong>5&times;</strong>. ' +
+        'You cannot change leverage on an open position in Hyperliquid. ' +
+        'The A$50 risk calculation still holds (risk = size &times; stop distance, leverage only affects margin).</div></div>' +
+
+        '<div class="stack-step"><div class="stack-n">02</div>' +
+        '<div>Place a new <strong style="color:' + col + '">' + dirUp + '</strong> market order. ' +
+        'Size: <strong>' + sz + ' ' + name + '</strong>. ' +
+        'Adds A$50 risk. Margin required: <strong>' + marg4h + '</strong>.</div></div>' +
+
+        '<div class="stack-step"><div class="stack-n">03</div>' +
+        '<div>After the fill, open your position detail and tap ' +
+        '<strong>View Orders &rarr; Modify</strong>. ' +
+        '<strong style="color:var(--neut)">Do not touch the 1H stop or TP</strong> &mdash; ' +
+        'those levels belong to the 1H trade only.</div></div>' +
+
+        '<div class="stack-step"><div class="stack-n">04</div>' +
+        '<div>Add a <strong>second TP/SL pair</strong> for the 4H add-on, sized at <strong>' + sz + ' ' + name + '</strong>. ' +
+        '<span style="color:var(--short)">Stop: <strong>' + stopFmt + '</strong></span> (' + stopPct + ' &middot; 1.5&times; 4H ATR). ' +
+        '<span style="color:var(--long)">Take Profit: <strong>' + tpFmt + '</strong></span> (' + tpPct + ' &middot; 1.67:1 R:R). ' +
+        'Use stop-market and limit/market TP order types.</div></div>' +
+
+        '<div class="stack-step"><div class="stack-n">05</div>' +
+        '<div><strong>How it works in Hyperliquid:</strong> One combined position, two TP/SL pairs at different sizes. ' +
+        'When 1H TP triggers &rarr; closes 1H size only. ' +
+        'When 4H TP triggers &rarr; closes <strong>' + sz + ' ' + name + '</strong>. ' +
+        'Total max risk on ' + name + ': <strong>A$100</strong>.</div></div>' +
+
+        '<div class="stack-step"><div class="stack-n">06</div>' +
+        '<div>When either leg closes, tap the <strong>' + posUp + '</strong> button in the tracker above to update it. ' +
+        'Vol: <strong>' + vr + '&times;</strong> &#10003; above 1.5&times; gate.</div></div>' +
+
+        '</div></div>';
+
+    } else if (oppDir) {
+      const dirUp = dir.toUpperCase();
+      const posUp = pos_other.toUpperCase();
+      stackBanner =
+        '<div style="background:rgba(255,61,107,.05);border:1px solid rgba(255,61,107,.28);' +
+        'border-radius:7px;padding:13px 16px;margin-bottom:10px;">' +
+        '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--short);' +
+        'text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">' +
+        '&#9940; CONFLICT &mdash; ' + tf.toUpperCase() + ' ' + dirUp + ' vs ACTIVE ' + otherTf + ' ' + posUp +
+        '</div>' +
+        '<div style="font-family:var(--display);font-size:13px;color:var(--text);line-height:1.7;">' +
+        'Your 1H ' + name + ' ' + posUp + ' position is in the <strong>opposite direction</strong> ' +
+        'to this 4H signal. Skip this 4H trade and let the 1H play out. ' +
+        'Only 0.3% of trades conflict in the backtest &mdash; no edge in fighting your own position.' +
+        '</div></div>';
+    }
+  }
+
+
+  return sigCard + mtfBanner + stackBanner + statsRow + breakdown + noTradeBox + tradeParams + execSteps + rules;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  OVERVIEW CARD
+// ═══════════════════════════════════════════════════════════════════
+function buildOvCard(sym, sig, onclick) {
+  const dir = sig.dir, col = dirColor(dir), cls = dirClass(dir);
+  const name = sym.replace('USDT','');
+  const chg  = parseFloat(sig.ticker?.priceChangePercent ?? 0);
+  const pips = sig.signals.map(s =>
+    `<div class="ov-pip" style="background:${scoreColor(s.score)}"></div>`
+  ).join('');
+  return `
+    <div class="ov-card ${cls}" onclick="${onclick}">
+      <div class="ov-sym">${name}</div>
+      <div class="ov-price">$${sig.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+        <span style="color:${chg >= 0 ? 'var(--long)' : 'var(--short)'}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
+      </div>
+      <div class="ov-dir" style="color:${col}">${dir === 'long' ? '▲ LONG' : dir === 'short' ? '▼ SHORT' : '── WAIT'}</div>
+      <div class="ov-score" style="color:${col}">${sig.total > 0 ? '+' : ''}${sig.total}</div>
+      <div class="ov-sub">out of ±9</div>
+      <div class="ov-pips">${pips}</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+function renderOverview(tf) {
+  const el = document.getElementById(`ov-${tf}`);
+  if (!el) return;
+  el.innerHTML = SYMS.map(s => {
+    const sig = cache[s]?.[`sig${tf}`];
+    if (!sig) return '';
+    return buildOvCard(s, sig, `setAsset('${tf}','${s}')`);
+  }).join('');
+}
+
+function renderTabs(tf) {
+  const el = document.getElementById(`tabs-${tf}`);
+  if (!el) return;
+  const activeSym = active[`sym${tf}`];
+  el.innerHTML = SYMS.map(s => {
+    const dir = cache[s]?.[`sig${tf}`]?.dir ?? 'neutral';
+    const cls = s === activeSym ? `act-${dirClass(dir)}` : '';
+    return `<div class="asset-tab ${cls}" onclick="setAsset('${tf}','${s}')">${s.replace('USDT','')}</div>`;
+  }).join('');
+}
+
+function renderDetail(tf) {
+  const el  = document.getElementById(`detail-${tf}`);
+  const sym = active[`sym${tf}`];
+  const sig = cache[sym]?.[`sig${tf}`];
+  if (!el || !sig) return;
+  el.innerHTML = buildDetail(sym, sig);
+}
+
+function renderAwake() {
+  const el = document.getElementById('awake');
+  if (!el) return;
+  const h = new Date().getHours();
+  const inWindow = h >= 7 && h < 23;
+  if (inWindow) {
+    const rem = 23 - h;
+    el.innerHTML = `<span style="font-size:18px">⏰</span>
+      <div><strong style="color:var(--purple)">1H system active.</strong>
+      Trading window open (7am–11pm Sydney). ${rem} hour${rem !== 1 ? 's' : ''} remaining.
+      Check at :05 past each hour.</div>`;
+  } else {
+    el.innerHTML = `<span style="font-size:18px">😴</span>
+      <div><strong style="color:var(--dim)">Outside trading window.</strong>
+      1H system paused (outside 7am–11pm). Signals shown are from last closed candle
+      before window closed — do not trade on them.</div>`;
+  }
+}
+
+function setAsset(tf, sym) {
+  active[`sym${tf}`] = sym;
+  renderTabs(tf);
+  renderDetail(tf);
+  document.getElementById(`detail-${tf}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SYSTEM SWITCHER
+// ═══════════════════════════════════════════════════════════════════
+function switchSys(sys) {
+  active.sys = sys;
+  document.getElementById('tab-4h').className = 'sys-tab' + (sys === '4h' ? ' act-4h' : '');
+  document.getElementById('tab-1h').className = 'sys-tab' + (sys === '1h' ? ' act-1h' : '');
+  document.getElementById('panel-4h').style.display = sys === '4h' ? '' : 'none';
+  document.getElementById('panel-1h').style.display = sys === '1h' ? '' : 'none';
+  document.getElementById('strip-4h').style.display = sys === '4h' ? '' : 'none';
+  document.getElementById('strip-1h').style.display = sys === '1h' ? '' : 'none';
+  if (sys === '1h') { renderAwake(); renderOverview('1h'); renderTabs('1h'); renderDetail('1h'); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOAD ALL DATA
+// ═══════════════════════════════════════════════════════════════════
+async function loadAll() {
+  fetchAUD();
+  const btn = document.getElementById('rbtn');
+  btn.disabled = true; btn.textContent = 'LOADING…';
+  document.getElementById('loading').style.display = '';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
+
+  try {
+    await Promise.all(SYMS.map(async sym => {
+      const [k4h, k1h, k1d, tk, fd] = await Promise.all([
+        fetchKlines(sym, '4h', 150),
+        fetchKlines(sym, '1h', 210),
+        fetchKlines(sym, '1d', 110),
+        fetchTicker(sym),
+        fetchFunding(sym),
+      ]);
+      cache[sym] = {
+        sig4h: computeSignal(k4h, k1h, k1d, tk, fd, '4h'),
+        sig1h: computeSignal(k1h, k4h, k1d, tk, fd, '1h'),
+      };
+    }));
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = '';
+    renderOverview('4h'); renderTabs('4h'); renderDetail('4h');
+    if (active.sys === '1h') { renderAwake(); renderOverview('1h'); renderTabs('1h'); renderDetail('1h'); }
+
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('err').style.display = '';
+    document.getElementById('err').textContent =
+      '⚠️ Could not reach Binance API. Open this file directly in your browser.';
+    console.error(e);
+  }
+
+  btn.disabled = false; btn.textContent = '↻ REFRESH';
+}
+
+loadAll();
+
+// ═══════════════════════════════════════════════════════════════════
+//  FILL PRICE RECALCULATOR
+//  Called live as user types actual fill price into the input box.
+//  Recalculates stop, TP, size, margin from the fill price.
+//  ATR distances are fixed — only reference point changes.
+// ═══════════════════════════════════════════════════════════════════
+function recalcFill(fillId, paramsId, execId, sigEp, stopDist, tpDist, rUSD, lev, dir, name, riskAUD, vrLast, htfRSI, tf) {
+  const fillEp = parseFloat(document.getElementById(fillId).value) || sigEp;
+  const fStop  = dir === 'long' ? fillEp - stopDist : fillEp + stopDist;
+  const fTp    = dir === 'long' ? fillEp + tpDist   : fillEp - tpDist;
+  const fSize  = rUSD / stopDist;
+  const fMarg  = fSize * fillEp / lev;
+  const drift  = Math.abs(fillEp - sigEp);
+  const col    = dir === 'long' ? 'var(--long)' : 'var(--short)';
+
+  // Late entry warning
+  let warning = '';
+  if (drift > stopDist) {
+    warning = `<div style="background:rgba(255,61,107,.07);border:1px solid rgba(255,61,107,.3);
+      border-radius:6px;padding:10px 14px;margin-bottom:8px;
+      font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--short);">
+      ⛔ Price has moved <strong>${(drift/sigEp*100).toFixed(2)}%</strong> from signal
+      — more than 1× ATR ($${stopDist.toFixed(0)}). Consider skipping this trade.
+    </div>`;
+  } else if (drift > stopDist * 0.5) {
+    warning = `<div style="background:rgba(240,180,41,.06);border:1px solid rgba(240,180,41,.2);
+      border-radius:6px;padding:10px 14px;margin-bottom:8px;
+      font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--neut);">
+      ⚠️ Price has moved <strong>${(drift/sigEp*100).toFixed(2)}%</strong> from signal
+      — approaching 0.5× ATR threshold. Proceed with caution.
+    </div>`;
+  }
+
+  // Update params panel
+  const paramsEl = document.getElementById(paramsId);
+  if (paramsEl) paramsEl.innerHTML = warning + `
+    <div class="trade-params">
+      <div class="param-box">
+        <div class="param-val" style="color:${col}">${fSize.toFixed(4)}</div>
+        <div class="param-label">Position (${name})</div>
+        <div class="param-sub">${riskAUD} AUD ÷ $${stopDist.toFixed(2)} ATR stop</div>
+      </div>
+      <div class="param-box">
+        <div class="param-val" style="color:var(--short)">$${fStop.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+        <div class="param-label">Stop Loss</div>
+        <div class="param-sub">${(stopDist/fillEp*100).toFixed(2)}% · 1.5× ATR · stop-market</div>
+      </div>
+      <div class="param-box">
+        <div class="param-val" style="color:var(--long)">$${fTp.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+        <div class="param-label">Take Profit</div>
+        <div class="param-sub">${(tpDist/fillEp*100).toFixed(2)}% · 1.67:1 R:R · TP-market</div>
+      </div>
+      <div class="param-box">
+        <div class="param-val" style="color:var(--blue)">${lev}×</div>
+        <div class="param-label">Leverage</div>
+        <div class="param-sub">Isolated only</div>
+      </div>
+      <div class="param-box">
+        <div class="param-val">A$${Math.round(fMarg * 1.58)}</div>
+        <div class="param-label">Margin Required</div>
+        <div class="param-sub">At ${lev}× isolated</div>
+      </div>
+    </div>`;
+
+  // Update exec checklist
+  const execEl = document.getElementById(execId);
+  if (execEl) {
+    const late = drift > stopDist * 0.5;
+    const VOL_GATE = 1.5;
+    execEl.innerHTML = `
+      <div class="exec-hdr">EXECUTION CHECKLIST — <span style="color:var(--blue)">fill price: $${fillEp.toLocaleString()}</span></div>
+      <div class="exec-step">
+        <div class="exec-n">01</div>
+        <div>Set leverage to <strong>${lev}×</strong> on ${name}/USDT — <strong>isolated margin only</strong>. Never cross margin.</div>
+      </div>
+      <div class="exec-step">
+        <div class="exec-n">02</div>
+        <div>Open <strong style="color:${col}">${dir.toUpperCase()}</strong> market order.
+        Size: <strong>${fSize.toFixed(4)} ${name}</strong>.
+        Risk: A$${riskAUD} · Margin: <strong>A$${Math.round(fMarg * 1.58)}</strong>.</div>
+      </div>
+      <div class="exec-step">
+        <div class="exec-n">03</div>
+        <div>Set <strong>Stop Loss Price: $${fStop.toLocaleString(undefined,{maximumFractionDigits:2})}</strong>
+        — ${(stopDist/fillEp*100).toFixed(2)}% from fill · Stop-market · Place immediately after entry.</div>
+      </div>
+      <div class="exec-step">
+        <div class="exec-n">04</div>
+        <div>Set <strong>Take Profit Price: $${fTp.toLocaleString(undefined,{maximumFractionDigits:2})}</strong>
+        — ${(tpDist/fillEp*100).toFixed(2)}% from fill · 1.67:1 R:R · TP-market · Do not move it.</div>
+      </div>
+      <div class="exec-step">
+        <div class="exec-n">05</div>
+        <div><strong>Vol:</strong> ${vrLast.toFixed(2)}× ✅ above ${VOL_GATE}× gate.
+        ${late ? '<span style="color:var(--neut)">⚠️ Late entry — size already adjusted to preserve A$'+riskAUD+' risk.</span>' : 'Signal validated by volume.'}</div>
+      </div>
+      <div class="exec-step">
+        <div class="exec-n">06</div>
+        <div>${tf === '4h'
+          ? `<strong>MTF (4H):</strong> 1H RSI ${htfRSI.toFixed(0)} — informational. Full size in all MTF conditions.`
+          : `<strong>MTF gate (1H):</strong> 4H RSI ${htfRSI.toFixed(0)} — ${dir === 'long' ? 'Bullish >55' : 'Bearish <45'} ✅ Required condition met.`
+        }</div>
+      </div>`;
+  }
+}
+
+</script>
+</body>
+</html>
